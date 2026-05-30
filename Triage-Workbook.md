@@ -263,17 +263,15 @@ ANALYST: Ahmed
 ═══════════════════════════════════
 
 
----
-
-## Scenario 3: Encoded PowerShell Execution
+## Scenario 3: Suspicious Process Execution
 
 ### Alert Triggered
-Detection Rule: `SOC-Lab: Encoded PowerShell`
+Detection Rule: `SOC-Lab: Suspicious Process`
 Event ID: 4688
 
 ### Evidence
-![Encoded PowerShell](screenshots/triage-encoded-ps.png)
-*Encoded PowerShell command detected in Splunk*
+![Suspicious Process](screenshots/triage-encoded-ps.png)
+*Suspicious process creation detected in Splunk*
 
 ---
 
@@ -281,13 +279,13 @@ Event ID: 4688
 
 **Questions Asked:**
 - Is the event real and current?
-- Does the command line actually contain encoded/obfuscated content?
+- Does the raw log confirm a process was actually created?
 
 **Findings:**
 - ✅ Timestamp: Current
 - ✅ Raw log: Event ID 4688 confirmed
-- ✅ Command Line: Contains `-enc` flag with base64 string
-- ✅ Process: powershell.exe executed with obfuscated arguments
+- ✅ Process: cmd.exe launched with arguments
+- ✅ User context identified
 
 **Verdict: Alert is verified. Proceed to context.**
 
@@ -296,51 +294,51 @@ Event ID: 4688
 ### Step 2: Context
 
 **Questions Asked:**
-- Who executed this command?
+- Who executed this process?
 - What was the parent process?
-- Can we decode the base64 to understand the actual command?
-- Is this normal for this user/machine?
+- What command was executed?
+- Is this normal activity for this user?
 
 **Findings:**
 - **User:** Administrator
-- **Command Pattern:** `powershell -enc [base64 payload]`
-- **Base64 Decoded:** The encoded string decodes to: `Write-Host 'Triage Test'`
-- **Parent Process:** Explored via available logs
+- **Process:** cmd.exe spawned from PowerShell
+- **Command:** echo SOC Triage Test (simulated lab activity)
+- **Parent Process:** powershell.exe launching cmd.exe
 
 **Story So Far:**
-An encoded PowerShell command was executed. The `-enc` flag is a standard obfuscation technique used by attackers to hide malicious commands from signature-based detection. The decoded content in this case is benign (a lab simulation), but the pattern is identical to real-world malware execution.
+A command prompt was launched from PowerShell. The parent-child relationship (PowerShell → cmd.exe) is a common pattern used by attackers to execute commands while evading PowerShell logging. In this lab simulation, the command is benign, but the execution pattern mirrors real-world attack techniques.
 
 ---
 
 ### Step 3: Scope
 
 **Questions Asked:**
-- Did this PowerShell process make any network connections?
-- Did it spawn child processes?
-- Did it create any files or persistence mechanisms?
+- Did this process spawn any child processes?
+- Did it make network connections?
+- Were other suspicious processes created in the same timeframe?
 
 **Findings:**
-- **Network:** Checked for Event ID 5156 or Sysmon Event ID 3 — no outbound connections detected
-- **Child Processes:** No suspicious child processes spawned
-- **Persistence:** Correlated with new user creation (Scenario 2)
-- **Other Hosts:** Only detected on this single host
+- **Child Processes:** None detected
+- **Network:** No outbound connections from this process
+- **Other Activity:** Correlated with new user creation (Scenario 2) in the same timeframe
+- **Other Hosts:** Single host only
 
-**Scope Verdict: CORRELATED — Linked to user account creation in same timeframe. Single host affected.**
+**Scope Verdict: CORRELATED — Linked to other suspicious activity. Single host.**
 
 ---
 
 ### Step 4: Decision
 
-**Assessment:** HIGH severity (if this were production, with real malicious payload)
+**Assessment:** MEDIUM severity (pattern is suspicious; content is benign in this simulation)
 
-**Decision:** In a production environment: ESCALATE to Tier 2 for investigation.
-In lab environment: Documented for training.
+**Decision:** In a production environment: INVESTIGATE FURTHER.
+In lab environment: Documented for training purposes.
 
 **Reasoning:**
-- Encoded PowerShell is a top attacker technique (MITRE T1059.001)
-- Even though decoded content is benign, the obfuscation pattern itself is suspicious
-- Correlated with persistence activity = potential multi-stage attack
-- Would recommend host isolation + full investigation in production
+- PowerShell spawning cmd.exe is a common attacker technique
+- Correlated with user account creation = potential attack chain
+- The actual command is benign (lab simulation)
+- If the command contained network activity or file downloads, would escalate to HIGH
 
 ---
 
@@ -349,50 +347,47 @@ In lab environment: Documented for training.
 ═══════════════════════════════════
 TICKET: INC-2026-0047
 ═══════════════════════════════════
-TITLE: [HIGH] Encoded PowerShell Execution — Administrator
-STATUS: ESCALATED (Simulated)
-SEVERITY: HIGH
+TITLE: [MEDIUM] Suspicious Process Execution — PowerShell → cmd.exe
+STATUS: INVESTIGATED
+SEVERITY: MEDIUM
 ─────────────────────────────────────
 
 SUMMARY:
-Encoded PowerShell command executed by Administrator. Command
-used -enc flag with base64 payload. Pattern matches known
-attacker obfuscation technique (MITRE T1059.001). Correlated
-with new user creation alert.
+Suspicious process chain detected: PowerShell spawning cmd.exe.
+Pattern matches common attack technique where attackers use
+PowerShell to execute system commands. Correlated with new user
+creation alert in same timeframe.
 
 TIMELINE (UTC):
-14:07 — Encoded PowerShell executed (Event ID 4688)
+14:07 — PowerShell launched cmd.exe (Event ID 4688)
+14:07 — Command executed: echo SOC Triage Test
 14:07 — Related: New user account created (Event ID 4720)
 14:10 — Alert verified in Splunk
-14:12 — Base64 decoded: benign content (lab simulation)
-14:15 — Scope confirmed, correlated with persistence alert
-14:20 — Escalated (simulated)
+14:15 — Scope confirmed, correlated with second alert
+14:20 — Investigation completed
 
 FINDINGS:
 • User: Administrator
-• Command: powershell -enc [base64]
-• Decoded Content: Write-Host 'Triage Test' (benign)
-• Pattern: Obfuscation technique (T1059.001)
-• Correlation: Linked to unauthorized account creation
+• Parent: powershell.exe
+• Child: cmd.exe
+• Command: echo SOC Triage Test (benign simulation)
+• Pattern: Suspicious parent-child relationship
+• Correlation: Linked to account creation (T1136.001)
 
 IOCs:
-• Technique: T1059.001 (PowerShell)
-• Pattern: base64 encoded command execution
-• Related: New user account (T1136.001)
+• Process pattern: PowerShell → cmd.exe execution chain
+• Related: New user account "triage_test"
 
 RECOMMENDATION:
 
-Investigate Administrator account activity
+Monitor for similar process chains in production
 
-Check for network connections from this process
+Alert on PowerShell spawning cmd.exe with network activity
 
-Review all encoded PowerShell executions in past 24h
+Correlate with any file download or data exfiltration alerts
 
-Correlate with any data exfiltration alerts
-
-ANALYST: Ahmed
+ANALYST: [Ahmed]
 ═══════════════════════════════════
-
 
 ---
 
@@ -412,7 +407,7 @@ ANALYST: Ahmed
 - ✅ Professional ticket writing
 - ✅ 5-step triage framework application
 - ✅ Attack chain correlation
-
+- ✅ Parent-child process analysis (PowerShell → cmd.exe)
 ---
 
 *This workbook represents real hands-on triage using a live Splunk environment.*
