@@ -1,6 +1,6 @@
 # 📋 SOC Triage Workbook
 
-**Analyst:** [Your Name]
+**Analyst:** Ahmed
 **Purpose:** Real-world alert triage scenarios using the 5-step framework
 **Environment:** Home SOC Lab — Splunk SIEM with Windows Event Logs
 
@@ -132,7 +132,7 @@ IOCs: None — no compromise
 ACTION: Closed. If this were production with remote source IP,
 would escalate and block IP.
 
-ANALYST: [Your Name]
+ANALYST: Ahmed
 ═══════════════════════════════════
 
 
@@ -259,7 +259,7 @@ Review all activity during this timeframe
 
 Check for additional persistence mechanisms
 
-ANALYST: [Your Name]
+ANALYST: Ahmed
 ═══════════════════════════════════
 
 
@@ -390,7 +390,7 @@ Review all encoded PowerShell executions in past 24h
 
 Correlate with any data exfiltration alerts
 
-ANALYST: [Your Name]
+ANALYST: Ahmed
 ═══════════════════════════════════
 
 
