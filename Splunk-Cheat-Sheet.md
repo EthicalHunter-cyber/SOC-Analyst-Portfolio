@@ -1,7 +1,7 @@
 # 📊 Splunk SPL Quick Reference
 
 **Purpose:** Operational cheat sheet for SOC analysts performing log investigations.
-**Environment:** Splunk Enterprise (Dev License) | Windows Event Logs
+**Environment:** Splunk Enterprise (Dev License) | Windows Event Logs.
 
 ---
 
